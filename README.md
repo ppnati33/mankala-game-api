@@ -1,7 +1,7 @@
 # Mancala Game Application with Spring Boot
 This service implements Mancala Game Back End REST API
 
-![img_4.png](img_4.png)
+![img_1.png](img_1.png)
 
 ## Game description 
 
