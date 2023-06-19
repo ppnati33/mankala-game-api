@@ -1,0 +1,17 @@
+# game configurations
+game:
+  pit-stones: 6
+
+spring:
+  mongodb:
+    embedded:
+      version: 4.4.9
+  cloud:
+    bus:
+      enabled: false
+    discovery:
+      enabled: false
+    consul:
+      enabled: false
+      config:
+        enabled: false

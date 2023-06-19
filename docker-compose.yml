@@ -1,0 +1,23 @@
+version: '3'
+services:
+  mongodb:
+    image: mongo:4.0
+    container_name: "mankala_mongodb"
+    ports:
+      - "27017:27017"
+
+  mankala-game-api:
+    build: .
+    container_name: "mankala-game-api"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb
+    environment:
+      - SPRING_CLOUD_CONSUL_HOST=consul-server
+      - SPRING_APPLICATION_NAME=mankala-api
+      - SPRING_DATA_MONGODB_HOST=mongodb
+      - SPRING_DATA_MONGODB_PORT=27017
+      - SPRING_REDIS_HOST=redisdb
+      - SPRING_REDIS_PORT=6379
+      - MANKALA_API_SERVICE_ID= mankala-api
