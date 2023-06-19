@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -59,10 +60,18 @@ public class GameService {
                 .filter(pit -> !pit.getId().equals(STORE_ID_BY_PLAYER.get(PLAYER_1))
                         && !pit.getId().equals(STORE_ID_BY_PLAYER.get(PLAYER_2)))
                 .collect(groupingBy(Pit::getOwner, summingInt(Pit::getStonesCount)));
+        Map<Player, Integer> storeStonesCountMap = game.getPits().stream()
+                .filter(pit -> pit.getId().equals(STORE_ID_BY_PLAYER.get(PLAYER_1))
+                        || pit.getId().equals(STORE_ID_BY_PLAYER.get(PLAYER_2)))
+                .collect(groupingBy(Pit::getOwner, summingInt(Pit::getStonesCount)));
 
-        if (houseStonesCountMap.values().stream().allMatch(houseStonesCount -> houseStonesCount == 0)) {
+        boolean isOutOfStonesForAnyPlayer = houseStonesCountMap.values().stream()
+                .anyMatch(houseStonesCount -> houseStonesCount == 0);
+        boolean isEqualStonesCountInStores = new HashSet<>(storeStonesCountMap.values()).size() == 1;
+
+        if (isOutOfStonesForAnyPlayer && isEqualStonesCountInStores) {
             return Status.DRAW;
-        } else if (houseStonesCountMap.values().stream().anyMatch(houseStonesCount -> houseStonesCount == 0)) {
+        } else if (isOutOfStonesForAnyPlayer) {
             return Status.WIN;
         } else {
             return Status.ACTIVE;
