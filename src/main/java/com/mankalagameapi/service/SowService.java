@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import static com.mankalagameapi.consts.GameConstants.STORE_ID_BY_PLAYER;
+import static com.mankalagameapi.consts.GameConstants.STORE_ID_BY_PLAYER_MAP;
 import static com.mankalagameapi.model.Player.PLAYER_1;
 import static com.mankalagameapi.model.Player.PLAYER_2;
 import static java.lang.String.format;
@@ -82,7 +82,7 @@ public class SowService {
             throw new IllegalArgumentException(format("Pit pitId=%s can't be used to sow", pitToTakeFromId));
         }
 
-        if (pitToTakeFromId == STORE_ID_BY_PLAYER.get(game.getActivePlayer())) {
+        if (pitToTakeFromId == STORE_ID_BY_PLAYER_MAP.get(game.getActivePlayer())) {
             throw new IllegalArgumentException(format("Pit pitId=%s can't be used to sow because it is a store", pitToTakeFromId));
         }
 
@@ -93,7 +93,7 @@ public class SowService {
 
     private void collectOppositePitIfNotEmpty(Game game, int lastPitId) {
         Pit lastPit = getPitById(game, lastPitId);
-        int storeId = STORE_ID_BY_PLAYER.get(game.getActivePlayer());
+        int storeId = STORE_ID_BY_PLAYER_MAP.get(game.getActivePlayer());
 
         if (lastPitId == storeId) {
             return;
@@ -110,7 +110,7 @@ public class SowService {
     }
 
     private void setNextTurn(Game game, int lastPitToSowId) {
-        if (lastPitToSowId != STORE_ID_BY_PLAYER.get(game.getActivePlayer())) {
+        if (lastPitToSowId != STORE_ID_BY_PLAYER_MAP.get(game.getActivePlayer())) {
             game.setActivePlayer((game.getActivePlayer() == PLAYER_1) ? PLAYER_2 : PLAYER_1);
         }
     }

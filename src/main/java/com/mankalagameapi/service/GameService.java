@@ -8,14 +8,12 @@ import org.modelmapper.ModelMapper;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import static com.mankalagameapi.consts.GameConstants.DEFAULT_PIT_STONES_COUNT;
-import static com.mankalagameapi.consts.GameConstants.STORE_ID_BY_PLAYER;
+import static com.mankalagameapi.consts.GameConstants.STORE_ID_BY_PLAYER_MAP;
 import static com.mankalagameapi.model.Player.PLAYER_1;
 import static com.mankalagameapi.model.Player.PLAYER_2;
 import static java.util.stream.Collectors.groupingBy;
@@ -35,18 +33,18 @@ public class GameService {
         int finalPitStonesCount = pitStonesCount == null ? DEFAULT_PIT_STONES_COUNT : pitStonesCount;
 
         List<Pit> pits = new ArrayList<>();
+        AtomicInteger prevPlayerStoreId = new AtomicInteger();
 
-        int firstPlayerStoreId = STORE_ID_BY_PLAYER.get(PLAYER_1);
-        IntStream.range(1, firstPlayerStoreId)
-                .forEach(num -> pits.add(new House(num, finalPitStonesCount, PLAYER_1)));
+        EnumSet.allOf(Player.class).forEach(player -> {
+            int currentPlayerStoreId = STORE_ID_BY_PLAYER_MAP.get(player);
 
-        pits.add(new Store(firstPlayerStoreId, PLAYER_1));
+            IntStream.range(prevPlayerStoreId.incrementAndGet(), currentPlayerStoreId)
+                    .forEach(num -> pits.add(new House(num, finalPitStonesCount, player)));
 
-        int secondPlayerStoreId = STORE_ID_BY_PLAYER.get(PLAYER_2);
-        IntStream.range(firstPlayerStoreId + 1, secondPlayerStoreId)
-                .forEach(num -> pits.add(new House(num, finalPitStonesCount, PLAYER_2)));
+            pits.add(new Store(currentPlayerStoreId, player));
 
-        pits.add(new Store(secondPlayerStoreId, PLAYER_2));
+            prevPlayerStoreId.set(currentPlayerStoreId);
+        });
 
         return modelMapper.map(gameStorageService.save(new Game(pits)), GameDto.class);
     }
@@ -57,12 +55,10 @@ public class GameService {
 
     public Status calculateStatus(Game game) {
         Map<Player, Integer> houseStonesCountMap = game.getPits().stream()
-                .filter(pit -> !pit.getId().equals(STORE_ID_BY_PLAYER.get(PLAYER_1))
-                        && !pit.getId().equals(STORE_ID_BY_PLAYER.get(PLAYER_2)))
+                .filter(pit -> !STORE_ID_BY_PLAYER_MAP.containsValue(pit.getId()))
                 .collect(groupingBy(Pit::getOwner, summingInt(Pit::getStonesCount)));
         Map<Player, Integer> storeStonesCountMap = game.getPits().stream()
-                .filter(pit -> pit.getId().equals(STORE_ID_BY_PLAYER.get(PLAYER_1))
-                        || pit.getId().equals(STORE_ID_BY_PLAYER.get(PLAYER_2)))
+                .filter(pit -> STORE_ID_BY_PLAYER_MAP.containsValue(pit.getId()))
                 .collect(groupingBy(Pit::getOwner, summingInt(Pit::getStonesCount)));
 
         boolean isOutOfStonesForAnyPlayer = houseStonesCountMap.values().stream()
@@ -83,8 +79,7 @@ public class GameService {
                 .collect(groupingBy(Pit::getOwner, summingInt(Pit::getStonesCount)));
 
         game.getPits().forEach(pit -> {
-            if (!pit.getId().equals(STORE_ID_BY_PLAYER.get(PLAYER_1))
-                    && !pit.getId().equals(STORE_ID_BY_PLAYER.get(PLAYER_2))) {
+            if (!STORE_ID_BY_PLAYER_MAP.containsValue(pit.getId())) {
                 pit.clear();
             } else {
                 pit.setStonesCount(totalStonesCountMap.get(pit.getOwner()));
